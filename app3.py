@@ -94,7 +94,7 @@ else:
 
     # Fonction de prétraitement de l'image
     def preprocess_image(image):
-        image = image.resize((64, 64))  # Redimension
+        image = image.resize((84, 84))  # Redimension
         image = np.array(image) / 255.0  # Normaliser les pixels
         image = np.expand_dims(image, axis=0)  # Ajouter une dimension batch
         return image
