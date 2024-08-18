@@ -98,18 +98,17 @@ else:
         image = np.array(image) / 255.0  # Normaliser les pixels
         image = np.expand_dims(image, axis=0)  # Ajouter une dimension batch
         return image
-
-    # Fonction pour prédire l'âge
-    def predict_age_model(image):
-        pred = age_model.predict(image)
-        age = int(np.round(pred[0]))
-        return age
-
-    # Fonction pour prédire le sexe
-    def predict_gender_model(image):
-        pred = gender_model.predict(image)
-        gender = "Masculin" if np.round(pred[0]) == 1 else "Féminin"
-        return gender
+    
+    # Fonction pour prédire l'âge et le sexe
+    def predict_age_and_gender(image):
+        try:
+            predictions = model.predict(image)
+            age = int(np.round(predictions[1][0]))
+            gender = "Masculin" if np.round(predictions[0][0]) == 1 else "Féminin"
+            return age, gender
+        except Exception as e:
+            st.error(f"Erreur lors de la prédiction : {e}")
+            return None, None
 
     # Onglet pour la prédiction
     with tab1:
@@ -130,7 +129,7 @@ else:
                 # Annoter l'image
                 draw = ImageDraw.Draw(image)
                 font = ImageFont.load_default()
-                draw.text((20, 20), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
+                draw.text((10, 10), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
                 
                 # Afficher l'image annotée
                 st.image(image, caption='Résultats de la prédiction', use_column_width=True)
