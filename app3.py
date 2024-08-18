@@ -8,8 +8,7 @@ from tensorflow.keras.models import load_model
 import numpy as np
 
 # Charger les modèles de prédiction d'âge et de sexe
-age_model = load_model('model_prediction.keras')
-gender_model = load_model('model_prediction.keras')
+predict_age_and_gender = load_model('model_prediction.keras')
 
 # Gestion des utilisateurs
 users_db = {
