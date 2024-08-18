@@ -95,7 +95,7 @@ else:
         try:
             predictions = model.predict(image)
             age = int(np.round(predictions[1][0]))  # Supposant que l'âge est la deuxième sortie
-            gender = "Masculin" if np.round(predictions[0][0]) == 1 else "Féminin"  # Supposant que le sexe est la première sortie
+            gender = "Masculin" if np.round(predictions[0][0]) == 0 else "Féminin"  # Supposant que le sexe est la première sortie
             return age, gender
         except Exception as e:
             st.error(f"Erreur lors de la prédiction : {e}")
