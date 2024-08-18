@@ -94,7 +94,7 @@ else:
 
     # Fonction de prétraitement de l'image
     def preprocess_image(image):
-        image = image.resize((84, 84))  # Redimension
+        image = image.resize((64, 64))  # Redimension
         image = np.array(image) / 255.0  # Normaliser les pixels
         image = np.expand_dims(image, axis=0)  # Ajouter une dimension batch
         return image
@@ -130,7 +130,7 @@ else:
                 # Annoter l'image
                 draw = ImageDraw.Draw(image)
                 font = ImageFont.load_default()
-                draw.text((10, 10), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
+                draw.text((20, 20), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
                 
                 # Afficher l'image annotée
                 st.image(image, caption='Résultats de la prédiction', use_column_width=True)
