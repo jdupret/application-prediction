@@ -7,8 +7,8 @@ from datetime import datetime
 from tensorflow.keras.models import load_model
 import numpy as np
 
-# Charger les modèles de prédiction d'âge et de sexe
-predict_age_and_gender = load_model('model_prediction.keras')
+# Charger le modèle combiné de prédiction d'âge et de sexe
+model = load_model('model_prediction.keras')
 
 # Gestion des utilisateurs
 users_db = {
@@ -43,10 +43,8 @@ if "authenticated" not in st.session_state:
 if not st.session_state["authenticated"]:
     login()
 else:
-    # Titre de l'application
-    st.title('Application pour la détection de l\'âge et le sexe d\'une personne')
+    st.title('Application pour la détection de l\'âge et du sexe d\'une personne')
 
-    # Description de l'objectif 
     st.markdown("""
     <style>
     .description {
@@ -75,119 +73,98 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Choix du thème
     theme = st.sidebar.selectbox("Choisir le thème", ["Clair", "Sombre"])
     if theme == "Sombre":
         st.write('<style>body {background-color: #2e2e2e; color: white;}</style>', unsafe_allow_html=True)
 
-    # Section pour choisir l'image
     st.sidebar.header("Options")
     uploaded_file = st.sidebar.file_uploader("Choisissez une image...", type=["jpg", "jpeg", "png"])
 
-    # Historique des prédictions
     if "history" not in st.session_state:
         st.session_state.history = pd.DataFrame(columns=["Image", "Âge", "Sexe", "Utilisateur", "Date"])
 
-    # Onglets pour organiser l'interface
     tab1, tab2, tab3, tab4 = st.tabs(["Prédiction", "Historique", "Statistiques", "Documentation"])
 
-    # Fonction de prétraitement de l'image
     def preprocess_image(image):
-        image = image.resize((84, 84))  # Redimension
+        image = image.resize((84, 84))  # Redimensionner selon ce que le modèle attend
         image = np.array(image) / 255.0  # Normaliser les pixels
         image = np.expand_dims(image, axis=0)  # Ajouter une dimension batch
         return image
-    
-    # Fonction pour prédire l'âge et le sexe
+
     def predict_age_and_gender(image):
         try:
             predictions = model.predict(image)
-            age = int(np.round(predictions[1][0]))
-            gender = "Masculin" if np.round(predictions[0][0]) == 1 else "Féminin"
+            age = int(np.round(predictions[1][0]))  # Supposant que l'âge est la deuxième sortie
+            gender = "Masculin" if np.round(predictions[0][0]) == 1 else "Féminin"  # Supposant que le sexe est la première sortie
             return age, gender
         except Exception as e:
             st.error(f"Erreur lors de la prédiction : {e}")
             return None, None
 
-    # Onglet pour la prédiction
     with tab1:
         if uploaded_file is not None:
-            # Afficher l'image
             image = Image.open(uploaded_file)
             st.image(image, caption='Image chargée', use_column_width=True)
 
-            # Bouton pour effectuer la prédiction
             if st.button("Prédire"):
-                # Prétraiter l'image
                 processed_image = preprocess_image(image)
+                age, gender = predict_age_and_gender(processed_image)
                 
-                # Faire les prédictions avec les modèles réels
-                age = predict_age_model(processed_image)
-                gender = predict_gender_model(processed_image)
-                
-                # Annoter l'image
-                draw = ImageDraw.Draw(image)
-                font = ImageFont.load_default()
-                draw.text((10, 10), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
-                
-                # Afficher l'image annotée
-                st.image(image, caption='Résultats de la prédiction', use_column_width=True)
+                if age is not None and gender is not None:
+                    draw = ImageDraw.Draw(image)
+                    font = ImageFont.load_default()
+                    draw.text((10, 10), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
+                    
+                    st.image(image, caption='Résultats de la prédiction', use_column_width=True)
 
-                # Ajouter à l'historique
-                new_entry = pd.DataFrame({
-                    "Image": [uploaded_file.name],
-                    "Âge": [age],
-                    "Sexe": [gender],
-                    "Utilisateur": [st.session_state["username"]],
-                    "Date": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
-                })
-                st.session_state.history = pd.concat([st.session_state.history, new_entry], ignore_index=True)
+                    new_entry = pd.DataFrame({
+                        "Image": [uploaded_file.name],
+                        "Âge": [age],
+                        "Sexe": [gender],
+                        "Utilisateur": [st.session_state["username"]],
+                        "Date": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+                    })
+                    st.session_state.history = pd.concat([st.session_state.history, new_entry], ignore_index=True)
 
-                # Télécharger les résultats
-                buf = io.BytesIO()
-                image.save(buf, format="JPEG")
-                byte_im = buf.getvalue()
-                st.download_button(
-                    label="Télécharger l'image annotée",
-                    data=byte_im,
-                    file_name="result.jpg",
-                    mime="image/jpeg",
-                )
+                    buf = io.BytesIO()
+                    image.save(buf, format="JPEG")
+                    byte_im = buf.getvalue()
+                    st.download_button(
+                        label="Télécharger l'image annotée",
+                        data=byte_im,
+                        file_name="result.jpg",
+                        mime="image/jpeg",
+                    )
+                else:
+                    st.error("Erreur dans la prédiction. Veuillez vérifier l'image ou le modèle.")
         else:
             st.info("Veuillez charger une image pour continuer.")
 
-    # Onglet pour l'historique
     with tab2:
         st.header("Historique des Prédictions")
         st.dataframe(st.session_state.history, use_container_width=True, height=200)
 
-    # Onglet pour les statistiques
     with tab3:
         st.header("Statistiques des Prédictions")
         if len(st.session_state.history) > 0:
-            # Distribution des âges
             st.subheader("Distribution des Âges")
             age_counts = st.session_state.history['Âge'].value_counts().sort_index()
             st.bar_chart(age_counts)
 
-            # Répartition des sexes
             st.subheader("Répartition des Sexes")
             gender_counts = st.session_state.history['Sexe'].value_counts()
             st.bar_chart(gender_counts)
 
-            # Âge moyen
             st.subheader("Âge Moyen")
             mean_age = st.session_state.history['Âge'].mean()
             st.write(f"L'âge moyen des utilisateurs est de {mean_age:.2f} ans.")
 
-            # Activité des utilisateurs
             st.subheader("Activité des Utilisateurs")
             activity_counts = st.session_state.history['Utilisateur'].value_counts()
             st.bar_chart(activity_counts)
         else:
             st.info("Aucune donnée dans l'historique pour afficher les statistiques.")
 
-    # Onglet pour la documentation
     with tab4:
         st.header("Documentation")
         
@@ -215,7 +192,7 @@ else:
         
         st.subheader("Modèles de Prédiction")
         st.write("""
-        Les modèles de prédiction d'âge et de sexe sont basés sur des réseaux de neurones convolutifs (CNN). Ils ont été entraînés sur la base de données UTKFace, qui contient des images annotées avec l'âge, le sexe, et l'origine ethnique.
+        Le modèle de prédiction d'âge et de sexe est basé sur un réseau de neurones convolutif (CNN). Il a été entraîné sur la base de données UTKFace, qui contient des images annotées avec l'âge, le sexe, et l'origine ethnique.
         """)
         
         st.subheader("Auteurs")
@@ -223,7 +200,6 @@ else:
         Cette application a été développée dans le cadre d'un projet de fin d'études. 
         """)
 
-    # Bouton de déconnexion
     if st.sidebar.button("Se déconnecter"):
         st.session_state["authenticated"] = False
         st.experimental_rerun()
