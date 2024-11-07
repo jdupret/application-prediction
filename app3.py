@@ -112,7 +112,7 @@ else:
                 
                 if age is not None and gender is not None:
                     draw = ImageDraw.Draw(image)
-                    font = ImageFont.load_default(30)
+                    font = ImageFont.load_default(60)
                     draw.text((50, 50), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
                     
                     st.image(image, caption='Résultats de la prédiction', use_column_width=True)
