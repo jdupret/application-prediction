@@ -115,7 +115,7 @@ else:
                     try:
                     font = ImageFont.truetype("arial.ttf", 30)
                     except IOError:
-                    font = ImageFont.load_default()
+                    font = ImageFont.load_default(30)
                     draw.text((50, 50), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
                     
                     st.image(image, caption='Résultats de la prédiction', use_column_width=True)
