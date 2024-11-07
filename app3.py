@@ -112,6 +112,9 @@ else:
                 
                 if age is not None and gender is not None:
                     draw = ImageDraw.Draw(image)
+                    try:
+                    font = ImageFont.truetype("arial.ttf", 30)
+                    except IOError:
                     font = ImageFont.load_default()
                     draw.text((50, 50), f"Âge: {age}, Sexe: {gender}", fill="white", font=font)
                     
